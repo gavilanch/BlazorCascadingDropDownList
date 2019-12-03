@@ -1,0 +1,47 @@
+﻿@page "/counter"
+@attribute [Authorize]
+<h1>Counter</h1>
+
+<p>Current count: @currentCount</p>
+
+<div>
+    <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+</div>
+
+<input type="number" @bind-value="currentCount" @bind-value:event="oninput" />
+
+<h2>PreventDefault</h2>
+
+<input value="@count" @onkeypress="KeyHandler" @onkeypress:preventDefault />
+
+<h2>Stop Propagation</h2>
+
+<input @bind="stopPropagation" type="checkbox" />
+<div @onclick="OnClickParentDiv">
+    Parent div
+    <div @onclick="OnClickChildDiv" @onclick:stopPropagation="stopPropagation">
+        Child div
+    </div>
+</div>
+
+@code {
+
+     bool stopPropagation;
+
+    void OnClickParentDiv() => Console.WriteLine("Parent div clicked.");
+    void OnClickChildDiv() => Console.WriteLine("Child div clicked.");
+
+    int count = 0;
+
+    void KeyHandler(KeyboardEventArgs ev)
+    {
+        if (ev.Key == "+")
+        {
+            count++;
+        }
+        else if (ev.Key == "-")
+        {
+            count--;
+        }
+    }
+}

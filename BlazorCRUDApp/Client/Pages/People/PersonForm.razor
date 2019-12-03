@@ -1,0 +1,121 @@
+﻿@inject HttpClient http
+
+    <EditForm Model="@Person" OnValidSubmit="@OnValidSubmit">
+        <DataAnnotationsValidator />
+        <div class="form-group">
+            <label>Name:</label>
+            <div>
+                <InputText @bind-Value="@Person.Name" />
+                <ValidationMessage For="@(() => Person.Name)" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Country:</label>
+            <div>
+                <InputSelectNumber class="form-control"
+                                   ValueChanged="@((int value) => CountryHasChanged(value))"
+                                   ValueExpression="@(() => countryId)"
+                                   Value="@countryId">
+                    <option value="0">--Select a country--</option>
+                    @foreach (var item in Countries)
+                    {
+                        @if (item.Id == countryId)
+                        {
+                            <option selected value="@item.Id">@item.Name</option>
+                        }
+                        else
+                        {
+                            <option value="@item.Id">@item.Name</option>
+                        }
+                    }
+                </InputSelectNumber>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>State:</label>
+            <div>
+                <InputSelectNumber class="form-control"
+                                   @bind-Value="Person.StateId"
+                                   >
+                    <option value="0">--Select a state--</option>
+                    @foreach (var item in States)
+                    {
+                        @if (item.Id == Person.StateId)
+                        {
+                            <option selected value="@item.Id">@item.Name</option>
+                        }
+                        else
+                        {
+                            <option value="@item.Id">@item.Name</option>
+                        }
+                    }
+                </InputSelectNumber>
+                <ValidationMessage For="@(() => Person.StateId)" />
+            </div>
+        </div>
+
+        <div class="form-group form-markdown-container">
+            <div>
+                <label>Biography:</label>
+                <div>
+                    <InputTextArea @bind-Value="@Person.Biography" />
+                    <ValidationMessage For="@(() => Person.Biography)" />
+                </div>
+            </div>
+            <div>
+                <label>Biography (preview):</label>
+                <div class="markdown-container">
+                    <DisplayMarkdown MarkdownContent="@Person.Biography">
+                    </DisplayMarkdown>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-success">
+            @ButtonText
+        </button>
+
+    </EditForm>
+
+@code {
+    [Parameter] public Person Person { get; set; }
+    [Parameter] public string ButtonText { get; set; } = "Save Person";
+    [Parameter] public EventCallback OnValidSubmit { get; set; }
+    private List<Country> Countries = new List<Country>();
+    private List<State> States = new List<State>();
+    private int countryId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        if (Person.State != null)
+        {
+            countryId = Person.State.CountryId;
+            await LoadStates(countryId);
+        }
+
+        Countries = await http.GetJsonAsync<List<Country>>("api/countries");
+    }
+
+    private async Task CountryHasChanged(int value)
+    {
+        Person.StateId = 0;
+        countryId = value;
+
+        if (value == 0)
+        {
+            States.Clear();
+        }
+        else
+        {
+            await LoadStates(value);
+        }
+    }
+
+    private async Task LoadStates(int countryId)
+    {
+        States = await http.GetJsonAsync<List<State>>($"api/countries/{countryId}/states");
+    }
+}
